@@ -1,0 +1,15 @@
+[
+  {
+    "ciudad": "Bogota",
+    "pais": "Colombia",
+    "latitud": "4.600",
+    "longitud": "-74.083",
+    "temperatura": 13,
+    "sensacion_termica": 12,
+    "humedad": 84,
+    "velocidad_viento": 7,
+    "descripcion": "Patchy rain nearby",
+    "fecha_extraccion": "2026-02-27T19:49:18.474384",
+    "codigo_tiempo": 176
+  }
+]
