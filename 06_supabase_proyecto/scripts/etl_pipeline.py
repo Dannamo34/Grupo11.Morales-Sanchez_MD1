@@ -1,31 +1,18 @@
 import pandas as pd
-import os
 import time
-from sqlalchemy import create_engine, text
-from urllib.parse import quote_plus
+from sqlalchemy import text
 from dotenv import load_dotenv
-from extractor import extract_pokemons
+from scripts.extractor import extract_pokemons
+from scripts.database import get_engine
 
-# cargar variables
 load_dotenv()
 
-# conexión Supabase
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD"))
-DB_NAME = os.getenv("DB_NAME")
-
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-engine = create_engine(DATABASE_URL)
+engine = get_engine()
 
 def run_etl(limit=20):
     inicio = time.time()
 
     try:
-        # =============================
-        # EXTRACT
-        # =============================
         print(f"📊 Extrayendo {limit} Pokémon...")
         df = extract_pokemons(limit)
 
@@ -35,29 +22,29 @@ def run_etl(limit=20):
             raise Exception("No se extrajeron datos")
 
         # =============================
-        # LOAD (bulk insert)
+        # LOAD SIN DUPLICADOS
         # =============================
-        df.to_sql("pokemon", engine, if_exists="append", index=False)
-        registros_guardados = len(df)
-        registros_fallidos = 0
+        registros_guardados = 0
+
+        for _, row in df.iterrows():
+            try:
+                row.to_frame().T.to_sql("pokemon", engine, if_exists="append", index=False)
+                registros_guardados += 1
+            except:
+                pass
+
+        registros_fallidos = registros_extraidos - registros_guardados
 
         estado = "SUCCESS"
         mensaje = "Carga completada correctamente"
-
-        print(f"✅ Bulk insert completado: {registros_guardados} registros")
 
     except Exception as e:
         registros_extraidos = 0
         registros_guardados = 0
         registros_fallidos = 1
         estado = "ERROR"
-        mensaje = str(e)
+        mensaje = str(e)[:200]  # 🔥 evita error varchar
 
-        print(f"❌ Error en ETL: {mensaje}")
-
-    # =============================
-    # MÉTRICAS ETL
-    # =============================
     fin = time.time()
     tiempo_total = fin - inicio
 
@@ -90,9 +77,4 @@ def run_etl(limit=20):
 
         conn.commit()
 
-    print(f"✅ ETL completado — Guardados: {registros_guardados} | Fallidos: {registros_fallidos}")
-
-
-if __name__ == "__main__":
-    cantidad = int(input("¿Cuántos Pokémon deseas cargar? "))
-    run_etl(cantidad)
+    print(f"✅ ETL completado")
