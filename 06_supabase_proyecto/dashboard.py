@@ -16,111 +16,107 @@ st.set_page_config(
 )
 
 # =========================
-# CARGAR IMAGEN (SEGURO)
+# IMAGEN SEGURA (NO FALLA EN CLOUD)
 # =========================
-def get_base64_image(image_path):
+BASE_DIR = os.path.dirname(__file__)
+IMG_PATH = os.path.join(BASE_DIR, "poke.jpg")
+
+def get_base64_image(path):
     try:
-        if os.path.exists(image_path):
-            with open(image_path, "rb") as img_file:
-                return base64.b64encode(img_file.read()).decode()
-        return None
-    except Exception:
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+    except:
         return None
 
-img_base64 = get_base64_image("poke.jpg")
+img_base64 = get_base64_image(IMG_PATH)
 
 # =========================
-# ESTILOS + ANIMACIONES 🎨
+# ESTILOS PRO + ANIMACIONES
 # =========================
-st.markdown(f"""
+st.markdown("""
 <style>
 
-/* Fondo general */
-body {{
+body {
     background: linear-gradient(135deg, #0f172a, #020617);
-}}
+}
 
 /* Animación */
-@keyframes fadeIn {{
-    from {{opacity: 0; transform: translateY(-20px);}}
-    to {{opacity: 1; transform: translateY(0);}}
-}}
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
 
 /* HEADER */
-.header-container {{
+.header-container {
     text-align: center;
     animation: fadeIn 1s ease-in;
-}}
+}
 
-.header-img {{
-    width: 420px;
-    margin-bottom: 15px;
-    transition: transform 0.3s ease;
-}}
+.header-img {
+    width: 500px;
+    margin-bottom: 10px;
+}
 
-.header-img:hover {{
-    transform: scale(1.08);
-}}
-
-.header-title {{
+.header-title {
     font-size: 42px;
     font-weight: bold;
     background: linear-gradient(90deg, #38bdf8, #22c55e);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-}}
+}
 
-/* KPIs */
-.kpi {{
+/* KPI */
+.kpi {
     padding: 20px;
     border-radius: 15px;
     text-align: center;
     color: white;
-    transition: all 0.3s ease;
-}}
+    transition: 0.3s;
+}
 
-.kpi:hover {{
+.kpi:hover {
     transform: scale(1.05);
     box-shadow: 0px 0px 20px rgba(255,255,255,0.2);
-}}
+}
 
-.kpi1 {{background: linear-gradient(135deg, #22c55e, #4ade80);}}
-.kpi2 {{background: linear-gradient(135deg, #3b82f6, #60a5fa);}}
-.kpi3 {{background: linear-gradient(135deg, #f59e0b, #fbbf24);}}
-.kpi4 {{background: linear-gradient(135deg, #ef4444, #f87171);}}
+.kpi1 {background: linear-gradient(135deg, #22c55e, #4ade80);}
+.kpi2 {background: linear-gradient(135deg, #3b82f6, #60a5fa);}
+.kpi3 {background: linear-gradient(135deg, #f59e0b, #fbbf24);}
+.kpi4 {background: linear-gradient(135deg, #ef4444, #f87171);}
 
 /* BOTONES */
-.stButton>button {{
+.stButton>button {
     background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
     border-radius: 10px;
     height: 3em;
-    transition: 0.3s;
-}}
+}
 
-.stButton>button:hover {{
-    transform: scale(1.05);
-}}
-
-/* SIDEBAR MÁS CLARO */
-section[data-testid="stSidebar"] {{
+/* SIDEBAR CLARO */
+section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #64748b, #94a3b8);
     color: white;
-    border-right: 2px solid #38bdf8;
-}}
+}
 
-section[data-testid="stSidebar"] * {{
+section[data-testid="stSidebar"] * {
     color: white !important;
-}}
+}
 
 </style>
-
-<div class="header-container">
-    {f'<img src="data:image/png;base64,{img_base64}" class="header-img">' if img_base64 else ''}
-    <div class="header-title">🚀 Pokémon Data</div>
-</div>
-
 """, unsafe_allow_html=True)
+
+# =========================
+# HEADER DINÁMICO
+# =========================
+header_html = '<div class="header-container">'
+
+if img_base64:
+    header_html += f'<img src="data:image/png;base64,{img_base64}" class="header-img">'
+
+header_html += '<div class="header-title">🚀 Pokémon Data Analytics Platform</div></div>'
+
+st.markdown(header_html, unsafe_allow_html=True)
 
 # =========================
 # CONEXIÓN
@@ -140,9 +136,13 @@ if st.sidebar.button("🚀 Ejecutar ETL"):
     st.success("ETL ejecutado correctamente")
 
 # =========================
-# DATA
+# DATA SEGURA
 # =========================
-df = pd.read_sql("SELECT * FROM pokemon", engine)
+try:
+    df = pd.read_sql("SELECT * FROM pokemon", engine)
+except Exception:
+    st.error("❌ Error conectando a Supabase. Revisa los Secrets.")
+    st.stop()
 
 # =========================
 # KPIs
@@ -152,7 +152,7 @@ col1, col2, col3, col4 = st.columns(4)
 col1.markdown(f"<div class='kpi kpi1'><h3>Total Pokémon</h3><h2>{len(df)}</h2></div>", unsafe_allow_html=True)
 col2.markdown(f"<div class='kpi kpi2'><h3>Altura Promedio</h3><h2>{round(df['height'].mean(),2)}</h2></div>", unsafe_allow_html=True)
 col3.markdown(f"<div class='kpi kpi3'><h3>Peso Promedio</h3><h2>{round(df['weight'].mean(),2)}</h2></div>", unsafe_allow_html=True)
-col4.markdown(f"<div class='kpi kpi4'><h3>Experiencia Promedio</h3><h2>{round(df['base_experience'].mean(),2)}</h2></div>", unsafe_allow_html=True)
+col4.markdown(f"<div class='kpi kpi4'><h3>Experiencia</h3><h2>{round(df['base_experience'].mean(),2)}</h2></div>", unsafe_allow_html=True)
 
 # =========================
 # FILTROS
@@ -168,15 +168,14 @@ if tipo != "Todos":
 # GRÁFICAS
 # =========================
 st.subheader("📊 Distribución de Experiencia")
-
-fig1 = px.histogram(df, x="base_experience", nbins=20, color_discrete_sequence=["#38bdf8"])
+fig1 = px.histogram(df, x="base_experience")
 st.plotly_chart(fig1, use_container_width=True)
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("⚖️ Peso vs Altura")
-    fig2 = px.scatter(df, x="height", y="weight", color="types", size="base_experience")
+    fig2 = px.scatter(df, x="height", y="weight", color="types")
     st.plotly_chart(fig2, use_container_width=True)
 
 with col2:
@@ -185,51 +184,41 @@ with col2:
     fig3 = px.bar(top, x="name", y="base_experience", color="types")
     st.plotly_chart(fig3, use_container_width=True)
 
-# MÁS GRÁFICAS
+# EXTRA GRÁFICAS
 st.subheader("🧬 Tipos de Pokémon")
-
 tipos = df["types"].str.split(", ").explode()
-tipos_count = tipos.value_counts().reset_index()
-tipos_count.columns = ["tipo", "cantidad"]
-
-fig4 = px.pie(tipos_count, names="tipo", values="cantidad")
+fig4 = px.pie(tipos.value_counts().reset_index(), names="index", values="types")
 st.plotly_chart(fig4, use_container_width=True)
 
 st.subheader("📦 Distribución de Peso")
-
 fig5 = px.box(df, y="weight", color="types")
 st.plotly_chart(fig5, use_container_width=True)
 
 st.subheader("⚡ Experiencia vs Peso")
-
-fig6 = px.scatter(df, x="base_experience", y="weight", color="types", size="height")
+fig6 = px.scatter(df, x="base_experience", y="weight", color="types")
 st.plotly_chart(fig6, use_container_width=True)
 
 # =========================
-# 🔥 EXPORTAR CSV
+# EXPORTAR CSV
 # =========================
-st.subheader("📥 Descargar datos")
-
 csv = df.to_csv(index=False).encode("utf-8")
 
 st.download_button(
-    label="⬇️ Descargar CSV",
-    data=csv,
-    file_name="pokemon_data.csv",
-    mime="text/csv"
+    "📥 Descargar CSV",
+    csv,
+    "pokemon_data.csv",
+    "text/csv"
 )
 
 # =========================
 # TABLA
 # =========================
 st.subheader("📋 Datos")
-
-st.dataframe(df, use_container_width=True, height=400)
+st.dataframe(df, use_container_width=True)
 
 # =========================
-# MÉTRICAS
+# MÉTRICAS ETL
 # =========================
 st.subheader("📈 Historial ETL")
-
 metricas = pd.read_sql("SELECT * FROM metricas_etl ORDER BY id DESC LIMIT 10", engine)
 st.dataframe(metricas, use_container_width=True)
