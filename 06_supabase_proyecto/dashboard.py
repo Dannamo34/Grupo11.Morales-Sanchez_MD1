@@ -35,7 +35,7 @@ img_base64 = get_base64_image("poke.jpg")
 st.markdown(f"""
 <style>
 
-/* Fondo */
+/* Fondo general */
 body {{
     background: linear-gradient(135deg, #0f172a, #020617);
 }}
@@ -104,7 +104,7 @@ body {{
 
 /* SIDEBAR MÁS CLARO */
 section[data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #475569, #64748b);
+    background: linear-gradient(180deg, #64748b, #94a3b8);
     color: white;
     border-right: 2px solid #38bdf8;
 }}
@@ -206,9 +206,24 @@ fig6 = px.scatter(df, x="base_experience", y="weight", color="types", size="heig
 st.plotly_chart(fig6, use_container_width=True)
 
 # =========================
+# 🔥 EXPORTAR CSV
+# =========================
+st.subheader("📥 Descargar datos")
+
+csv = df.to_csv(index=False).encode("utf-8")
+
+st.download_button(
+    label="⬇️ Descargar CSV",
+    data=csv,
+    file_name="pokemon_data.csv",
+    mime="text/csv"
+)
+
+# =========================
 # TABLA
 # =========================
 st.subheader("📋 Datos")
+
 st.dataframe(df, use_container_width=True, height=400)
 
 # =========================
