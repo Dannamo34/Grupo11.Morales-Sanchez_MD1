@@ -4,6 +4,7 @@ import plotly.express as px
 from scripts.database import get_engine
 from scripts.etl_pipeline import run_etl
 import base64
+import os
 
 # =========================
 # CONFIG
@@ -15,11 +16,16 @@ st.set_page_config(
 )
 
 # =========================
-# CARGAR IMAGEN
+# CARGAR IMAGEN (SEGURO)
 # =========================
 def get_base64_image(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+    try:
+        if os.path.exists(image_path):
+            with open(image_path, "rb") as img_file:
+                return base64.b64encode(img_file.read()).decode()
+        return None
+    except Exception:
+        return None
 
 img_base64 = get_base64_image("poke.jpg")
 
@@ -29,7 +35,7 @@ img_base64 = get_base64_image("poke.jpg")
 st.markdown(f"""
 <style>
 
-/* Fondo general */
+/* Fondo */
 body {{
     background: linear-gradient(135deg, #0f172a, #020617);
 }}
@@ -47,7 +53,7 @@ body {{
 }}
 
 .header-img {{
-    width: 420px;   /* 🔥 MÁS GRANDE */
+    width: 420px;
     margin-bottom: 15px;
     transition: transform 0.3s ease;
 }}
@@ -96,9 +102,9 @@ body {{
     transform: scale(1.05);
 }}
 
-/* 🔥 SIDEBAR MÁS CLARO */
+/* SIDEBAR MÁS CLARO */
 section[data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #475569, #64748b); /* MÁS CLARO */
+    background: linear-gradient(180deg, #475569, #64748b);
     color: white;
     border-right: 2px solid #38bdf8;
 }}
@@ -110,7 +116,7 @@ section[data-testid="stSidebar"] * {{
 </style>
 
 <div class="header-container">
-    <img src="data:image/png;base64,{img_base64}" class="header-img">
+    {f'<img src="data:image/png;base64,{img_base64}" class="header-img">' if img_base64 else ''}
     <div class="header-title">🚀 Pokémon Data</div>
 </div>
 
@@ -159,7 +165,7 @@ if tipo != "Todos":
     df = df[df["types"].str.contains(tipo)]
 
 # =========================
-# GRÁFICAS (TODAS)
+# GRÁFICAS
 # =========================
 st.subheader("📊 Distribución de Experiencia")
 
@@ -179,7 +185,7 @@ with col2:
     fig3 = px.bar(top, x="name", y="base_experience", color="types")
     st.plotly_chart(fig3, use_container_width=True)
 
-# 🔥 MÁS GRÁFICAS (NO ELIMINADAS)
+# MÁS GRÁFICAS
 st.subheader("🧬 Tipos de Pokémon")
 
 tipos = df["types"].str.split(", ").explode()
@@ -203,7 +209,6 @@ st.plotly_chart(fig6, use_container_width=True)
 # TABLA
 # =========================
 st.subheader("📋 Datos")
-
 st.dataframe(df, use_container_width=True, height=400)
 
 # =========================
