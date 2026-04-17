@@ -41,13 +41,11 @@ body {
     background: linear-gradient(135deg, #0f172a, #020617);
 }
 
-/* Animación */
 @keyframes fadeIn {
     from {opacity: 0; transform: translateY(-20px);}
     to {opacity: 1; transform: translateY(0);}
 }
 
-/* HEADER */
 .header-container {
     text-align: center;
     animation: fadeIn 1s ease-in;
@@ -66,7 +64,6 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
-/* KPI */
 .kpi {
     padding: 20px;
     border-radius: 15px;
@@ -85,7 +82,6 @@ body {
 .kpi3 {background: linear-gradient(135deg, #f59e0b, #fbbf24);}
 .kpi4 {background: linear-gradient(135deg, #ef4444, #f87171);}
 
-/* BOTONES */
 .stButton>button {
     background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
@@ -93,7 +89,6 @@ body {
     height: 3em;
 }
 
-/* SIDEBAR CLARO */
 section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #64748b, #94a3b8);
     color: white;
@@ -184,12 +179,27 @@ with col2:
     fig3 = px.bar(top, x="name", y="base_experience", color="types")
     st.plotly_chart(fig3, use_container_width=True)
 
-# EXTRA GRÁFICAS
+# =========================
+# 🧬 TIPOS DE POKÉMON (FIX)
+# =========================
 st.subheader("🧬 Tipos de Pokémon")
-tipos = df["types"].str.split(", ").explode()
-fig4 = px.pie(tipos.value_counts().reset_index(), names="index", values="types")
+
+tipos = df["types"].dropna().str.split(", ").explode()
+
+tipos_count = tipos.value_counts().reset_index()
+tipos_count.columns = ["tipo", "cantidad"]
+
+fig4 = px.pie(
+    tipos_count,
+    names="tipo",
+    values="cantidad"
+)
+
 st.plotly_chart(fig4, use_container_width=True)
 
+# =========================
+# OTRAS GRÁFICAS
+# =========================
 st.subheader("📦 Distribución de Peso")
 fig5 = px.box(df, y="weight", color="types")
 st.plotly_chart(fig5, use_container_width=True)
