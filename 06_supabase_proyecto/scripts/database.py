@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
+# 🔹 cargar variables de entorno
 load_dotenv()
 
 def _get_db_config():
@@ -14,7 +15,6 @@ def _get_db_config():
 
         host = st.secrets.get("DB_HOST")
 
-        # SOLO usar si existe y NO es localhost
         if host and host != "localhost":
             return {
                 "host": host,
@@ -31,33 +31,45 @@ def _get_db_config():
     # 2. LOCAL (.env)
     # ==============================
     return {
-        "host": os.getenv("DB_HOST", "localhost"),
-        "port": os.getenv("DB_PORT", "5432"),
-        "user": os.getenv("DB_USER", "postgres"),
-        "password": os.getenv("DB_PASSWORD", ""),
-        "dbname": os.getenv("DB_NAME", "postgres"),
+        "host": os.getenv("DB_HOST"),
+        "port": os.getenv("DB_PORT"),
+        "user": os.getenv("DB_USER"),
+        "password": os.getenv("DB_PASSWORD"),
+        "dbname": os.getenv("DB_NAME"),
     }
 
 
 def get_engine():
     config = _get_db_config()
 
-    # 🔒 codificar usuario y contraseña (MUY IMPORTANTE)
+    # 🚨 VALIDACIÓN (evita errores silenciosos)
+    if not all(config.values()):
+        raise ValueError(f"❌ Variables de entorno incompletas: {config}")
+
+    # 🔒 codificar usuario y contraseña
     user = quote_plus(config["user"])
     password = quote_plus(config["password"])
 
-    # 🔥 URL con SSL (OBLIGATORIO para Supabase)
+    # 🔥 URL CORRECTA (POOLER 6543)
     DATABASE_URL = (
-        f"postgresql://{user}:{password}"
+        f"postgresql+psycopg2://{user}:{password}"
         f"@{config['host']}:{config['port']}/{config['dbname']}"
-        f"?sslmode=require"
     )
 
-    # ⚡ engine optimizado
+    # ⚡ engine optimizado para Supabase
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,   # evita conexiones muertas
+        connect_args={
+            "sslmode": "require"   # 🔥 obligatorio en Supabase
+        },
+        pool_pre_ping=True,
         echo=False
     )
 
+    print("✅ Conexión a la base de datos lista")
+
     return engine
+
+
+# 🔹 instancia global (para importar directo)
+engine = get_engine() 
