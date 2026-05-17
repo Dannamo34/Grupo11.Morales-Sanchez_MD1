@@ -15,4 +15,4 @@ __pycache__/
 *.pyc
 
 # variables de entorno
-.env
+.env.venv/
